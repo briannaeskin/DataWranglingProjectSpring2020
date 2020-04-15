@@ -1,0 +1,27 @@
+---
+title: "Data Wrangling Final Project"
+author: "Brianna Eskin"
+date: "4/14/2020"
+output: pdf_document
+---
+
+##Introduction
+
+Jeopardy! is a game show in which contestants choose clues worth varying dollar amounts from predetermined general knowledge categories in the form of an answer and provide their answers in the form of a question. The first iteration of the show premiered on March 30, 1964 and was hosted by Art Fleming. The show underwent a few rounds of syndication before the current version of the game hosted by Alex Trebek premiered on September 10, 1984. The current syndicated version of the game, which is what this report will focus on, has seen some slight changes to the rules over the past 36 season, but the general strucutre has remained largely the same. In the first two rounds, Jeopardy and Double Jeopardy, contestants choose one of five clues with varying diffciulty and worth different dollar amounts from one of six categories. The clues are presented in the form of an answer and once the question is read, a contestant may buzz in and provide their response in the form of a question. If the contestant is correct, they earn the amount of money the clue was worth. If they are incorrect, they lose that amount. In each round, there are also Daily Doubles behind random clues, which allow the contestant who uncovered it to bet any amount they wish, up to their current amount earned. Then in the final round, Final Jeopardy, the contestants see the category and before the clue is read, wager some or all of their money that they then either gain or lose depending on if they respond correctly. At the end of the game, the contestant with the highest amount of money is crowned the victor, and returns the next day as the Champion until they lose.
+
+For my project, I will be wrangling data pertaining to the all time highest Jeopardy winners, as listed on https://www.jeopardy.com/contestant-zone/hall-of-fame. As of April 14, 2020 these contestants include:
+1. Brad Rutter
+2. Ken Jennings
+3. James Holzhauer
+4. David Madden
+5. Larissa Kelly
+6. Matt Jackson
+7. Jason Zuffranieri
+8. Roger Craig
+9. Colby Burnett
+10. Julia Collins
+
+<Add here the different topics you end up discussing>
+
+I am interested in Jeopardy! data because Jeopardy! is my all time favorite television program. There are many different aspects that go into the game, including contestant personalities, the trivia which allows viewers to easily play along at home, wagering strategy, and reflexes on the buzzer - all of which make the game exciting to watch. Also, because of these different layers of the game, there is a lot of different data that can be analyzed. 
+
