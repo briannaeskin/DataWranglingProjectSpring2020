@@ -24,14 +24,6 @@ For my project, I will be wrangling data pertaining to the all time highest Jeop
 9. Colby Burnett
 10. Julia Collins
 
-```{r contestants}
-contestants <- data.frame(
-  Contestants = c("Brad Rutter", "Brad Rutter", "Brad Rutter", "Ken Jennings", "Ken Jennings", "James Holzhauer", "David Madden", "Larissa Kelly", "Larissa Kelly", "Matt Jackson", "Jason Zuffranieri", "Roger Craig", "Roger Craig", "Colby Burnett", "Colby Burnett", "Julia Collins"), playerIds = c(278, 622, 12536, 661, 12547, 12983, 1963, 4956, 12539, 10266, 12824, 6976, 12550, 8057, 12537, 9517), AllStarsTeam = c("Team Brad", "Team Brad", "Team Brad", "Team Ken", "Team Ken", "No Team", "Team Brad", "Team Brad", "Team Brad", "Team Ken", "No Team", "Team Austin", "Team Austin", "Team Colby", "Team Colby", "Team Julia")
-)
-
-```
-
-
 <Add here the different topics you end up discussing>
 
 I am interested in Jeopardy! data because Jeopardy! is my all time favorite television program. There are many different aspects that go into the game, including contestant personalities, the trivia which allows viewers to easily play along at home, wagering strategy, and reflexes on the buzzer - all of which make the game exciting to watch. Also, because of these different layers of the game, there is a lot of different data that can be analyzed. 
@@ -43,14 +35,23 @@ For my project, I will be scraping data from the J-Archive (https://j-archive.co
 
 ## Data Scraping
 
+My main data frame was constructed starting with an empty data frame and a data frame consisting of the full names of contestants, player ids to link them to different pages on the J-Archive!, and the Team they played on during the Jeopardy All-Stars Tournament that aired in 2019. A contestant may appear multiple times if more than one player page was required to pull all of the games they played in.
+
+```{r contestants, echo = FALSE}
+contestants <- data.frame(
+  Contestants = c("Brad Rutter", "Brad Rutter", "Brad Rutter", "Ken Jennings", "Ken Jennings", "James Holzhauer", "David Madden", "Larissa Kelly", "Larissa Kelly", "Matt Jackson", "Jason Zuffranieri", "Roger Craig", "Roger Craig", "Colby Burnett", "Colby Burnett", "Julia Collins"), playerIds = c(278, 622, 12536, 661, 12547, 12983, 1963, 4956, 12539, 10266, 12824, 6976, 12550, 8057, 12537, 9517), AllStarsTeam = c("Team Brad", "Team Brad", "Team Brad", "Team Ken", "Team Ken", "No Team", "Team Brad", "Team Brad", "Team Brad", "Team Ken", "No Team", "Team Austin", "Team Austin", "Team Colby", "Team Colby", "Team Julia"), stringsAsFactors = FALSE
+)
+contestants
+```
+
 ```{r dataScraping}
 game_level_df <- data.frame(Contestant = character(),
-                               GameId = integer(),
-                               Date = character(),
-                               FinalScore = integer(),
-                               Outcome = character(),
-                               GameFormat = character()
-                               )
+                            GameId = integer(),
+                            Date = character(),
+                            FinalScore = integer(),
+                            Outcome = character(),
+                            GameFormat = character(), stringsAsFactors = FALSE
+)
 
 for (row in 1:nrow(contestants)) {
   contestant <- contestants[row, 1]
@@ -61,11 +62,23 @@ for (row in 1:nrow(contestants)) {
     gameIdForUrl <- gameIdsForUrl[row, 1]
     rowForGameLevelTable <- getRowForGameLevelTable(contestant, gameIdForUrl, allStarTeam)
     if(rowForGameLevelTable != "Don't include"){
-    game_level_df <- rbind(game_level_df, rowForGameLevelTable)
+      game_level_df <- rbind(game_level_df, rowForGameLevelTable)
     }
   }
 }
 game_level_df <- game_level_df %>%
   distinct()
+```
+
+Once I created this table, I iterated through the rows of the contestant table. Using the player id, I scraped the player pages on J-Archive to find the different game ids pertaining to their specific games. To do this, I extracted all of the "a" nodes and pulled the game id from the href tags using regular expressions, by searching for digits. This was difficult because there are two types of "game ids". The first the game's position in the sequence of Jeopardy games, which is what is included in my final table and used for the purpose of arranging the table by date game is played. The other game id, which is what I am interested in for this purpose, is the id used in the url, which is probably the sequence of when the game was added. The latter wasn't easily grabbed by CSS selector, so I was forced to check the class in the tag.
+
+The once I had the list of game ids, I iterated through that list to scrape the individual game level and score sites, similar to those mentioned in the "Data Sources" paragraph. From these sites, I was able to extract notes about the game (i.e. was it a tournament game or regular season game), the game id (this time, talking about the episode number), the date that game aired, the final score, the outcome (did the player win or lose, or in the event of a tournament, did they automatically advance, or rely on a wildcard spot). I then added a row to my data frame consisting of this information, along with the contestant's name.
+
+Most of this data was compiled scraping various nodes of the two sites. There were some pain points. First, there were some games that were split into multiple episodes. In particular, this was done during the IBM Watson exhibition matches in 2011, and the first round of the Jeopardy All Star Games competition in 2019. Because I am only interested in final scores, I had to exclude these games by check if the game comments mentioned that the episode was the Jeopardy Round only. Second, the Final Jeopardy table on the game site was incosistent between episodes. This was most often the case during finals of Tournaments, where the winner is determined by a two day total. So I needed to check how many columns were in table and add an Outcome column if it wasn't there, and noting that the game is an Accumulated game. The last issue I had was with the All Star Games - the Final Jeopardy table name was the name of the team, so I had to add an input to my function with the All Star team and assign the game to a contestant if the name in the table was either their name, or the name of their All Star Team. Below is what the table looks like for the contestant Roger Craig, who competed in Regular Season play, the Tournament of Champions, the Battle of the Decades, and the All Star games:
+
+```{r dataScrapingOutput}
+game_level_df %>%
+  filter(contestant == "Roger Craig") %>%
+  arrange(desc(GameId))
 ```
 

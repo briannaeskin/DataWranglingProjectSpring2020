@@ -86,4 +86,3 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
   )
   return(rowForTable)
 }
-
