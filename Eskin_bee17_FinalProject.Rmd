@@ -4,6 +4,9 @@ author: "Brianna Eskin"
 date: "4/14/2020"
 output: pdf_document
 ---
+```{r packages, echo=FALSE}
+source("C:\\Users\\Brianna\\Documents\\R\\597\\Final Project\\DataWranglingProjectSpring2020\\functions.r")
+```
 
 ## Introduction
 
@@ -21,6 +24,14 @@ For my project, I will be wrangling data pertaining to the all time highest Jeop
 9. Colby Burnett
 10. Julia Collins
 
+```{r contestants}
+contestants <- data.frame(
+  Contestants = c("Brad Rutter", "Brad Rutter", "Brad Rutter", "Ken Jennings", "Ken Jennings", "James Holzhauer", "David Madden", "Larissa Kelly", "Larissa Kelly", "Matt Jackson", "Jason Zuffranieri", "Roger Craig", "Roger Craig", "Colby Burnett", "Colby Burnett", "Julia Collins"), playerIds = c(278, 622, 12536, 661, 12547, 12983, 1963, 4956, 12539, 10266, 12824, 6976, 12550, 8057, 12537, 9517), AllStarsTeam = c("Team Brad", "Team Brad", "Team Brad", "Team Ken", "Team Ken", "No Team", "Team Brad", "Team Brad", "Team Brad", "Team Ken", "No Team", "Team Austin", "Team Austin", "Team Colby", "Team Colby", "Team Julia")
+)
+
+```
+
+
 <Add here the different topics you end up discussing>
 
 I am interested in Jeopardy! data because Jeopardy! is my all time favorite television program. There are many different aspects that go into the game, including contestant personalities, the trivia which allows viewers to easily play along at home, wagering strategy, and reflexes on the buzzer - all of which make the game exciting to watch. Also, because of these different layers of the game, there is a lot of different data that can be analyzed. 
@@ -29,3 +40,32 @@ I am interested in Jeopardy! data because Jeopardy! is my all time favorite tele
 
 For my project, I will be scraping data from the J-Archive (https://j-archive.com/), which is a fan run archive of most of the games from the Alex Trebek era of Jeopardy!. For all of the contestants I am analyzing, I will pull data from their individual game pages. For example, the season 36 premiere was also the 7th game won by Jason Zuffranieri, so I will scrape from this site: http://www.j-archive.com/showgame.php?game_id=6410. However, because we played in 20 games, I wil scrape from 20 sites for game data pertaining to him. I will do the same for the other contestants
 <Add here other sites I end up scrpaing from>
+
+## Data Scraping
+
+```{r dataScraping}
+game_level_df <- data.frame(Contestant = character(),
+                               GameId = integer(),
+                               Date = character(),
+                               FinalScore = integer(),
+                               Outcome = character(),
+                               GameFormat = character()
+                               )
+
+for (row in 1:nrow(contestants)) {
+  contestant <- contestants[row, 1]
+  player_id <- contestants[row, 2]
+  allStarTeam <- contestants[row, 3]
+  gameIdsForUrl <- getGameIdsForUrl(player_id)
+  for (row in 1:nrow(gameIdsForUrl)) {
+    gameIdForUrl <- gameIdsForUrl[row, 1]
+    rowForGameLevelTable <- getRowForGameLevelTable(contestant, gameIdForUrl, allStarTeam)
+    if(rowForGameLevelTable != "Don't include"){
+    game_level_df <- rbind(game_level_df, rowForGameLevelTable)
+    }
+  }
+}
+game_level_df <- game_level_df %>%
+  distinct()
+```
+
