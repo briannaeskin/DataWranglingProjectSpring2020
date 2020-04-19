@@ -38,6 +38,23 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
   } else {
     format <- "Regular Season"
   }
+  if(str_detect(game_comments, "Ultimate Tournament of Champions")) {
+    tournament_name <- "Ultimate Tournament of Champions"
+  } else if(str_detect(game_comments, "Million Dollar Masters")) {
+    tournament_name <- "Million Dollar Masters"
+  } else if(str_detect(game_comments, "Tournament of Champions")) {
+    tournament_name <- "Tournament of Champions"
+  } else if(str_detect(game_comments, "IBM")) {
+    tournament_name <- "IBM Challenge"
+  } else if(str_detect(game_comments, "Decades")) {
+    tournament_name <- "Battle of the Decades"
+  } else if(str_detect(game_comments, "Stars")) {
+    tournament_name <- "All Stars Tournament"
+  } else if(str_detect(game_comments, "Greatest")) {
+    tournament_name <- "Greatest of All Time"
+  } else {
+    tournament_name <- "Regular Season"
+  }
   game_id_and_date <- game_url %>%
     html_nodes("h1")
   game_id <- game_id_and_date %>%
@@ -78,11 +95,59 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
   }
   rowForTable <- data.frame(
     Contestant = contestant,
+    GameIdForUrl = gameIdForUrl,
     GameId = game_id,
     Date = game_date,
     FinalScore = final_score,
     Outcome = outcome,
-    GameFormat = format
+    GameFormat = format,
+    TournamentName = tournament_name
   )
   return(rowForTable)
 }
+
+getRowForTournamentWinningsTable <- function(contestant, tournament) {
+  contestant_tournament_table <- game_level_df %>%
+    filter(Contestant == contestant, TournamentName == tournament) %>%
+    filter(GameId == max(GameId))
+  contestants_filtered <- contestants %>%
+    filter(Contestants == contestant) %>%
+    select(Contestants, AllStarsTeam) %>%
+    distinct()
+  contestant_first_name <- contestant %>%
+    str_extract("^\\w+")
+  allStarTeam <- contestants_filtered[1,2]
+  gameIdForUrl <- contestant_tournament_table[1,2]
+  outcome <- contestant_tournament_table[1,6]
+  if(outcome == "Accumulated Game") {
+    tournament_scores <- paste0("http://www.j-archive.com/showscores.php?game_id=", gameIdForUrl) %>%
+      read_html() %>%
+      html_nodes("table") %>% .[5] %>%
+      html_table(fill = TRUE) %>%
+      as.data.frame(stringsAsFactors = FALSE) %>%
+      t() %>%
+      as.data.frame(stringsAsFactors = FALSE)
+    colnames(tournament_scores) <- c("Contestant", "Score", "Outcome")
+    tournament_scores <- tournament_scores %>%
+      filter(Contestant %in% c(contestant_first_name, allStarTeam))
+    result <- str_extract(tournament_scores$Outcome,".+?(?=:)")
+    winnings <- str_extract(tournament_scores$Outcome,"(?<=:\\s).*") %>%
+      str_replace_all("\\$|,", "") %>%
+      as.numeric()
+  } else{
+    result <- str_extract(tournament_scores$Outcome,".+?(?=:)")
+    winnings <- str_extract(tournament_scores$Outcome,"(?<=:\\s).*") %>%
+      str_replace_all("\\$|,", "") %>%
+      as.numeric()
+  }
+  rowForTournamentWinningsTable <- data.frame(
+    Contestant = contestant,
+    Tournament = tournament,
+    Outcome = result,
+    Winnings = winnings,
+    stringsAsFactors = FALSE
+  )
+  return(rowForTournamentWinningsTable)
+}
+
+

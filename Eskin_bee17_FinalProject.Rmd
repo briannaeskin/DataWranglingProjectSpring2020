@@ -44,13 +44,16 @@ contestants <- data.frame(
 contestants
 ```
 
-```{r dataScraping}
+```{r dataScraping, echo = FALSE, warning = FALSE}
 game_level_df <- data.frame(Contestant = character(),
+                            GameIdForUrl = integer(),
                             GameId = integer(),
                             Date = character(),
                             FinalScore = integer(),
                             Outcome = character(),
-                            GameFormat = character(), stringsAsFactors = FALSE
+                            GameFormat = character(), 
+                            TournamentName = character(),
+                            stringsAsFactors = FALSE
 )
 
 for (row in 1:nrow(contestants)) {
@@ -76,9 +79,15 @@ The once I had the list of game ids, I iterated through that list to scrape the 
 
 Most of this data was compiled scraping various nodes of the two sites. There were some pain points. First, there were some games that were split into multiple episodes. In particular, this was done during the IBM Watson exhibition matches in 2011, and the first round of the Jeopardy All Star Games competition in 2019. Because I am only interested in final scores, I had to exclude these games by check if the game comments mentioned that the episode was the Jeopardy Round only. Second, the Final Jeopardy table on the game site was incosistent between episodes. This was most often the case during finals of Tournaments, where the winner is determined by a two day total. So I needed to check how many columns were in table and add an Outcome column if it wasn't there, and noting that the game is an Accumulated game. The last issue I had was with the All Star Games - the Final Jeopardy table name was the name of the team, so I had to add an input to my function with the All Star team and assign the game to a contestant if the name in the table was either their name, or the name of their All Star Team. Below is what the table looks like for the contestant Roger Craig, who competed in Regular Season play, the Tournament of Champions, the Battle of the Decades, and the All Star games:
 
-```{r dataScrapingOutput}
+```{r dataScrapingOutput, echo = FALSE}
 game_level_df %>%
-  filter(contestant == "Roger Craig") %>%
+  filter(Contestant == "Roger Craig") %>%
   arrange(desc(GameId))
+```
+
+<Now talk about how I separated regular season winnings from tournament winnings, and output bar graph>
+
+```{r AllTimeWinnings, echo = FALSE}
+
 ```
 
