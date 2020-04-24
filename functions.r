@@ -2,6 +2,7 @@ library(tidyverse)
 library(rvest)
 library(stringr)
 library(purrr)
+options(scipen = 999999)
 
 getGameIdsForUrl <- function(player_id) {
   player_id_url <- paste0("http://www.j-archive.com/showplayer.php?player_id=", player_id) %>%
@@ -48,10 +49,12 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
     tournament_name <- "IBM Challenge"
   } else if(str_detect(game_comments, "Decades")) {
     tournament_name <- "Battle of the Decades"
-  } else if(str_detect(game_comments, "Stars")) {
-    tournament_name <- "All Stars Tournament"
+  } else if(str_detect(game_comments, "Star")) {
+    tournament_name <- "All-Star Games"
   } else if(str_detect(game_comments, "Greatest")) {
     tournament_name <- "Greatest of All Time"
+  } else if(str_detect(game_comments, "Teacher")) {
+    tournament_name <- "Teachers Tournament"
   } else {
     tournament_name <- "Regular Season"
   }
@@ -101,7 +104,8 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
     FinalScore = final_score,
     Outcome = outcome,
     GameFormat = format,
-    TournamentName = tournament_name
+    TournamentName = tournament_name,
+    stringsAsFactors = FALSE
   )
   return(rowForTable)
 }
@@ -131,18 +135,21 @@ getRowForTournamentWinningsTable <- function(contestant, tournament) {
     tournament_scores <- tournament_scores %>%
       filter(Contestant %in% c(contestant_first_name, allStarTeam))
     result <- str_extract(tournament_scores$Outcome,".+?(?=:)")
-    winnings <- str_extract(tournament_scores$Outcome,"(?<=:\\s).*") %>%
+    winnings <- str_extract(tournament_scores$Outcome,"(?<=:\\s)[\\$\\d+,]+") %>%
       str_replace_all("\\$|,", "") %>%
       as.numeric()
   } else{
-    result <- str_extract(tournament_scores$Outcome,".+?(?=:)")
-    winnings <- str_extract(tournament_scores$Outcome,"(?<=:\\s).*") %>%
+    result <- str_extract(outcome,".+?(?=:)")
+    winnings <- str_extract(outcome,"(?<=:\\s)[\\$\\d+,]+") %>%
       str_replace_all("\\$|,", "") %>%
       as.numeric()
   }
+  if (tournament == "All-Star Games") {
+    winnings <- round(winnings/3)
+  }
   rowForTournamentWinningsTable <- data.frame(
     Contestant = contestant,
-    Tournament = tournament,
+    TournamentName = tournament,
     Outcome = result,
     Winnings = winnings,
     stringsAsFactors = FALSE
@@ -150,4 +157,7 @@ getRowForTournamentWinningsTable <- function(contestant, tournament) {
   return(rowForTournamentWinningsTable)
 }
 
-
+##getRowForTournamentWinningsTable("Brad Rutter", "Tournament of Champions")
+##view(game_level_df)
+##as_tibble(game_level_df)
+##rowForTournamentWinningsTable$Winnings
