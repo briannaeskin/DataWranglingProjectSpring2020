@@ -41,6 +41,7 @@ My main data frame was constructed starting with an empty data frame and a data 
 contestants <- data.frame(
   Contestants = c("Brad Rutter", "Brad Rutter", "Brad Rutter", "Ken Jennings", "Ken Jennings", "James Holzhauer", "David Madden", "Larissa Kelly", "Larissa Kelly", "Matt Jackson", "Jason Zuffranieri", "Roger Craig", "Roger Craig", "Colby Burnett", "Colby Burnett", "Julia Collins"), playerIds = c(278, 622, 12536, 661, 12547, 12983, 1963, 4956, 12539, 10266, 12824, 6976, 12550, 8057, 12537, 9517), AllStarsTeam = c("Team Brad", "Team Brad", "Team Brad", "Team Ken", "Team Ken", "No Team", "Team Brad", "Team Brad", "Team Brad", "Team Ken", "No Team", "Team Austin", "Team Austin", "Team Colby", "Team Colby", "Team Julia"), stringsAsFactors = FALSE
 )
+contestant_names <- c("Brad Rutter", "Ken Jennings", "James Holzhauer", "David Madden", "Larissa Kelly", "Matt Jackson", "Jason Zuffranieri", "Roger Craig", "Colby Burnett", "Julia Collins")
 contestants
 ```
 
@@ -71,6 +72,7 @@ for (row in 1:nrow(contestants)) {
 }
 game_level_df <- game_level_df %>%
   distinct()
+game_level_df$Outcome <- as.character(game_level_df$Outcome)
 ```
 
 Once I created this table, I iterated through the rows of the contestant table. Using the player id, I scraped the player pages on J-Archive to find the different game ids pertaining to their specific games. To do this, I extracted all of the "a" nodes and pulled the game id from the href tags using regular expressions, by searching for digits. This was difficult because there are two types of "game ids". The first the game's position in the sequence of Jeopardy games, which is what is included in my final table and used for the purpose of arranging the table by date game is played. The other game id, which is what I am interested in for this purpose, is the id used in the url, which is probably the sequence of when the game was added. The latter wasn't easily grabbed by CSS selector, so I was forced to check the class in the tag.
@@ -88,6 +90,39 @@ game_level_df %>%
 <Now talk about how I separated regular season winnings from tournament winnings, and output bar graph>
 
 ```{r AllTimeWinnings, echo = FALSE}
-
+tournament_winnings_df <- data.frame(
+  Contestant = character(),
+  TournamentName = character(),
+  Outcome = character(),
+  Winnings = integer(),
+  stringsAsFactors = FALSE
+)
+game_level_df_tournament <- game_level_df %>%
+  filter(TournamentName != "Regular Season") %>%
+  select(Contestant, TournamentName) %>%
+  distinct()
+for (row in 1:nrow(game_level_df_tournament)) {
+  contestant <- game_level_df_tournament[row, 1]
+  tournamentName <- game_level_df_tournament[row, 2]
+  rowForTournamentWinningTable <- getRowForTournamentWinningsTable(contestant, tournamentName)
+  tournament_winnings_df <- rbind(tournament_winnings_df, rowForTournamentWinningTable)
+}
+game_level_df_regular_season <- game_level_df %>%
+  filter(TournamentName == "Regular Season") %>%
+  select(Contestant, GameId, TournamentName, FinalScore, Outcome)
+for (contestant in contestant_names) {
+    if(contestant != "Brad Rutter") {
+    game_level_df_regular_season_filtered <- game_level_df_regular_season %>%
+      filter(Contestant == contestant) %>%
+      filter(GameId == max(GameId))
+    gameId <- game_level_df_regular_season_filtered$GameId
+    winnings <- str_extract(game_level_df_regular_season_filtered$Outcome,"(?<=:\\s).*") %>%
+      str_replace_all("\\$|,", "") %>%
+      as.numeric()
+    print(contestant)
+    print(winnings)
+    game_level_df_regular_season[game_level_df_regular_season$GameId == gameId, "FinalScore"] <- winnings
+  }
+}
 ```
 
