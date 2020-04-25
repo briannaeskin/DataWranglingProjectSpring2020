@@ -124,5 +124,23 @@ for (contestant in contestant_names) {
     game_level_df_regular_season[game_level_df_regular_season$GameId == gameId, "FinalScore"] <- winnings
   }
 }
+winnings_df <- game_level_df_regular_season %>%
+  select(Contestant, TournamentName, Outcome, FinalScore)
+colnames(winnings_df)[4] <- "Winnings"
+winnings_df <- winnings_df %>%
+  rbind(tournament_winnings_df) %>%
+  mutate(Format = ifelse(TournamentName == "Regular Season", "Regular Season", "Tournament"))
+```
+<Talk about now plotting graphs>
+```{r winningsPlots, echo = FALSE}
+winnings_df %>%
+  select(Contestant, Format, Winnings) %>%
+  group_by(Contestant, Format) %>%
+  summarize(CummulativeEarnings = sum(Winnings)) %>%
+  mutate(CummulativeEarnings = ifelse(is.na(CummulativeEarnings), 0, CummulativeEarnings)) %>%
+  ggplot() +
+  geom_bar(mapping = aes(x = Contestant, y = CummulativeEarnings, fill = Format), stat ="identity") +
+  ggtitle("Earnings of Top Ten All-Time Winning Jeopardy Contestants") +
+  theme(axis.text.x = element_text(angle = 90))
 ```
 
