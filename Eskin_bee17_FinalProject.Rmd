@@ -6,6 +6,11 @@ output: pdf_document
 ---
 ```{r packages, echo=FALSE}
 source("C:\\Users\\Brianna\\Documents\\R\\597\\Final Project\\DataWranglingProjectSpring2020\\functions.r")
+library(tidyverse)
+library(rvest)
+library(stringr)
+library(purrr)
+options(scipen = 999999)
 ```
 
 ## Introduction
@@ -87,6 +92,7 @@ game_level_df %>%
   arrange(desc(GameId))
 ```
 
+## All-Time Winnings
 <Now talk about how I separated regular season winnings from tournament winnings, and output bar graph>
 
 ```{r AllTimeWinnings, echo = FALSE}
@@ -119,8 +125,6 @@ for (contestant in contestant_names) {
     winnings <- str_extract(game_level_df_regular_season_filtered$Outcome,"(?<=:\\s).*") %>%
       str_replace_all("\\$|,", "") %>%
       as.numeric()
-    print(contestant)
-    print(winnings)
     game_level_df_regular_season[game_level_df_regular_season$GameId == gameId, "FinalScore"] <- winnings
   }
 }
@@ -142,5 +146,45 @@ winnings_df %>%
   geom_bar(mapping = aes(x = Contestant, y = CummulativeEarnings, fill = Format), stat ="identity") +
   ggtitle("Earnings of Top Ten All-Time Winning Jeopardy Contestants") +
   theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r winningsPlot2, echo=FALSE}
+winnings_df %>%
+  select(Contestant, TournamentName, Winnings) %>%
+  group_by(Contestant, TournamentName) %>%
+  summarize(CummulativeEarnings = sum(Winnings)) %>%
+  mutate(CummulativeEarnings = ifelse(is.na(CummulativeEarnings), 0, CummulativeEarnings)) %>%
+  ggplot() +
+  geom_bar(mapping = aes(x = Contestant, y = CummulativeEarnings, fill = TournamentName), stat ="identity") +
+  ggtitle("Earnings of Top Ten All-Time Winning Jeopardy Contestants by Tournament") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## Scores Plotting
+
+<Talk about how we will plot scores (not winnings) over course of regular season>
+
+```{r scorePlotting, echo=FALSE}
+game_scores_df_regular_season <- game_level_df %>%
+  filter(TournamentName == "Regular Season") %>%
+  select(Contestant, GameId, FinalScore) %>%
+  group_by(Contestant) %>%
+  mutate(GamePlayed = min_rank(GameId))
+contestant_names <- game_scores_df_regular_season %>%
+  select(Contestant) %>%
+  distinct()
+ggplot(data = game_scores_df_regular_season,mapping = aes(x = GamePlayed, y = FinalScore, color = Contestant)) +
+  geom_point() +
+  geom_line() +
+  ggtitle("Final Scores for All-Time Winning Jeopardy Contestants - Regular Season") +
+  xlab("Game") +
+  ylab("Final Score")
+ggplot(data = game_scores_df_regular_season,mapping = aes(x = GamePlayed, y = FinalScore)) +
+  geom_point() +
+  geom_line() +
+  ggtitle("Final Scores for All-Time Winning Jeopardy Contestants - Regular Season") +
+  xlab("Game") +
+  ylab("Final Score") +
+  facet_wrap(~ Contestant, nrow = 5)
 ```
 
