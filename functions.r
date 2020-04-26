@@ -1,8 +1,3 @@
-library(tidyverse)
-library(rvest)
-library(stringr)
-library(purrr)
-options(scipen = 999999)
 
 getGameIdsForUrl <- function(player_id) {
   player_id_url <- paste0("http://www.j-archive.com/showplayer.php?player_id=", player_id) %>%
@@ -96,6 +91,22 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
   if(outcome == "") {
     outcome <- "Accumulated Game"
   }
+  coryat_table <- scores_url %>%
+    html_nodes("table") %>% last() %>%
+    html_table(fill = TRUE) %>%
+    as.data.frame() %>%
+    t() %>%
+    as.data.frame()
+  colnames(coryat_table) <- c("Contestant", "Score", "Outcome")
+  coryat_score <- coryat_table %>%
+    filter(Contestant %in% c(contestant_first_name, allStarTeam))
+  if(nrow(coryat_score) == 0){
+    return("Don't include")
+  }
+  coryat_score <- coryat_score$Score %>%
+    str_extract("\\d+,\\d+|\\d+") %>%
+    str_replace_all(",", "") %>%
+    as.numeric()
   rowForTable <- data.frame(
     Contestant = contestant,
     GameIdForUrl = gameIdForUrl,
@@ -105,6 +116,7 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
     Outcome = outcome,
     GameFormat = format,
     TournamentName = tournament_name,
+    CoryatScore = coryat_score,
     stringsAsFactors = FALSE
   )
   return(rowForTable)

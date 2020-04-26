@@ -4,7 +4,7 @@ author: "Brianna Eskin"
 date: "4/14/2020"
 output: pdf_document
 ---
-```{r packages, echo=FALSE}
+```{r packages, echo=FALSE, warning=FALSE}
 source("C:\\Users\\Brianna\\Documents\\R\\597\\Final Project\\DataWranglingProjectSpring2020\\functions.r")
 library(tidyverse)
 library(rvest)
@@ -59,6 +59,7 @@ game_level_df <- data.frame(Contestant = character(),
                             Outcome = character(),
                             GameFormat = character(), 
                             TournamentName = character(),
+                            CoryatScore = integer(),
                             stringsAsFactors = FALSE
 )
 
@@ -170,9 +171,6 @@ game_scores_df_regular_season <- game_level_df %>%
   select(Contestant, GameId, FinalScore) %>%
   group_by(Contestant) %>%
   mutate(GamePlayed = min_rank(GameId))
-contestant_names <- game_scores_df_regular_season %>%
-  select(Contestant) %>%
-  distinct()
 ggplot(data = game_scores_df_regular_season,mapping = aes(x = GamePlayed, y = FinalScore, color = Contestant)) +
   geom_point() +
   geom_line() +
@@ -186,5 +184,37 @@ ggplot(data = game_scores_df_regular_season,mapping = aes(x = GamePlayed, y = Fi
   xlab("Game") +
   ylab("Final Score") +
   facet_wrap(~ Contestant, nrow = 5)
+```
+
+<Discuss skews due to Brad's winnings being pre-doubled and James' due to aggresive wagering. Move on to Coryat Score>
+
+## Coryat Score
+
+<Discuss what Coryat Score is, origin, and other manipulation done to data (i.e. Brad's doubling for regular season games), will plot max and average scores, also will exclude All Star games since that was three person game>
+
+```{r coryatScores, echo=FALSE, warning = FALSE}
+coryat_scores_df <- game_level_df %>%
+  filter(TournamentName != "All-Star Games") %>%
+  rowwise() %>%
+  mutate(FinalScoreAdjusted = ifelse(GameId < 3966 && TournamentName != "Greatest of All Time", FinalScore*2, FinalScore),
+         CoryatScoreAdjusted = ifelse(GameId < 3966 && TournamentName != "Greatest of All Time", CoryatScore*2, CoryatScore)) %>%
+  select(Contestant, FinalScoreAdjusted, CoryatScoreAdjusted) %>%
+  group_by(Contestant) %>%
+  summarize(MaxFinalScore = max(FinalScoreAdjusted),
+            AverageFinalScore = mean(FinalScoreAdjusted),
+            MaxCoryatScore = max(CoryatScoreAdjusted),
+            AverageCoryatScore = mean(CoryatScoreAdjusted))
+coryat_scores_df <- coryat_scores_df %>%
+  gather("MaxFinalScore", "AverageFinalScore", "MaxCoryatScore", "AverageCoryatScore", key = "Attribute", value = "Score")
+ggplot(data = coryat_scores_df, mapping = aes(x = Contestant, y = Score, color = Attribute, size = Attribute)) +
+  geom_point() +
+  ggtitle("Coryat Scores versus Final Scores") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_color_discrete(name = "Score Type",
+                       labels = c("Average Coryat Score", "Average Final Score", "Max Coryat Score", "Max Final Score")) +
+  scale_y_continuous(breaks = seq(0,140000,20000)) +
+  scale_size_discrete(name = "Score Type",
+                       labels = c("Average Coryat Score", "Average Final Score", "Max Coryat Score", "Max Final Score"))
+  
 ```
 
