@@ -38,8 +38,9 @@ For each of the all time highest Jeopardy!, I will be analyzing their overall wi
 
 ## Data Sources
 
-For my project, I will be scraping data from the J-Archive (https://j-archive.com/), which is a fan run archive of most of the games from the Alex Trebek era of Jeopardy!. For all of the contestants I am analyzing, I will pull data from their individual game pages and for each individual game page, I will scrape the game scores page. For example, the season 36 premiere was also the 7th game won by Jason Zuffranieri, so I will scrape from these sites: http://www.j-archive.com/showgame.php?game_id=6410 and http://www.j-archive.com/showscores.php?game_id=6410. However, because he played in 20 games, I wil scrape from 20 sets of sites for game data pertaining to him. I will do the same for the other contestants
-<Add here other sites I end up scrpaing from>
+  For my project, I will be scraping data from the J-Archive (https://j-archive.com/), which is a fan run archive of most of the games from the Alex Trebek era of Jeopardy!. The site is broken down to different pages for each individual game. To find the different games each contestant played in, I will scrape from their different player profile pages, 16 pages in total. An example page for Jason Zuffranieri is http://www.j-archive.com/showplayer.php?player_id=12824. On this page, I will be pulling the various games each contestant played in and scraping data from that specific game's web page. An example is based on Jason's player page, I know he played in Game #8046, which is also the 36th season permiere. So I will be scraping data from that page, http://www.j-archive.com/showgame.php?game_id=6410. For that specific game, I will then be scraping data from the score breakdown page, which for the example game #8046 is http://www.j-archive.com/showscores.php?game_id=6410. I will be repeating this process for each game a contestant has played in. Using Jason as an example, he has played in 20 regular season games of Jeopardy!, so I will be scraping 20 game level sites and 20 score breakdown sites.
+  
+<Should I potentially add screenshots here?>
 
 ## Data Scraping
 
