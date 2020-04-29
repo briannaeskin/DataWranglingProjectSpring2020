@@ -6,11 +6,6 @@ output: pdf_document
 ---
 ```{r packages, echo=FALSE, warning=FALSE}
 source("C:\\Users\\Brianna\\Documents\\R\\597\\Final Project\\DataWranglingProjectSpring2020\\functions.r")
-library(tidyverse)
-library(rvest)
-library(stringr)
-library(purrr)
-options(scipen = 999999)
 ```
 
 ## Introduction
@@ -38,15 +33,17 @@ For each of the all time highest Jeopardy!, I will be analyzing their overall wi
 
 ## Data Sources
 
-  For my project, I will be scraping data from the J-Archive (https://j-archive.com/), which is a fan run archive of most of the games from the Alex Trebek era of Jeopardy!. The site is broken down to different pages for each individual game. To find the different games each contestant played in, I will scrape from their different player profile pages, 16 pages in total. An example page for Jason Zuffranieri is http://www.j-archive.com/showplayer.php?player_id=12824. On this page, I will be pulling the various games each contestant played in and scraping data from that specific game's web page. An example is based on Jason's player page, I know he played in Game #8046, which is also the 36th season permiere. So I will be scraping data from that page, http://www.j-archive.com/showgame.php?game_id=6410. For that specific game, I will then be scraping data from the score breakdown page, which for the example game #8046 is http://www.j-archive.com/showscores.php?game_id=6410. I will be repeating this process for each game a contestant has played in. Using Jason as an example, he has played in 20 regular season games of Jeopardy!, so I will be scraping 20 game level sites and 20 score breakdown sites.
+  For my project, I will be scraping data from the J-Archive (https://j-archive.com/), which is a fan run archive of most of the games from the Alex Trebek era of Jeopardy!. The site is broken down to different pages for each individual game. To find the different games each contestant played in, I will scrape from their different player profile pages, 16 pages in total, which were found by manually checking the j-archive, as one player can have multiple player pages. An example page for Jason Zuffranieri is http://www.j-archive.com/showplayer.php?player_id=12824. On this page, I will be pulling the various games each contestant played in and scraping data from that specific game's web page. An example is based on Jason's player page, I know he played in Game #8046, which is also the 36th season permiere. So I will be scraping data from that page, http://www.j-archive.com/showgame.php?game_id=6410. For that specific game, I will then be scraping data from the score breakdown page, which for the example game #8046 is http://www.j-archive.com/showscores.php?game_id=6410. I will be repeating this process for each game a contestant has played in. Using Jason as an example, he has played in 20 regular season games of Jeopardy!, so I will be scraping 20 game level sites and 20 score breakdown sites.
   
 <Should I potentially add screenshots here?>
 
 ## Data Scraping
 
-My main data frame was constructed starting with an empty data frame and a data frame consisting of the full names of contestants, player ids to link them to different pages on the J-Archive!, and the Team they played on during the Jeopardy All-Stars Tournament that aired in 2019. A contestant may appear multiple times if more than one player page was required to pull all of the games they played in.
+The first thing I did to start scraping data was I created a static data frame called contestants, whose structure is as below:
 
 ```{r contestants, echo = FALSE}
+contestants <- data.frame(ColumnName = c("Contestants", "playerIds", "AllStarsTeam"), Definition = c("Full name of a top 10 all-time winning contestant on Jeopardy!", "Player ID as extracted from the j-archive", "The team a contestant played on during the All-Star tournament in 2019- marked as No Team if not a participant"), Type = c("character()", "integer()", "character()"))
+contestants
 contestants <- data.frame(
   Contestants = c("Brad Rutter", "Brad Rutter", "Brad Rutter", "Ken Jennings", "Ken Jennings", "James Holzhauer", "David Madden", "Larissa Kelly", "Larissa Kelly", "Matt Jackson", "Jason Zuffranieri", "Roger Craig", "Roger Craig", "Colby Burnett", "Colby Burnett", "Julia Collins"), playerIds = c(278, 622, 12536, 661, 12547, 12983, 1963, 4956, 12539, 10266, 12824, 6976, 12550, 8057, 12537, 9517), AllStarsTeam = c("Team Brad", "Team Brad", "Team Brad", "Team Ken", "Team Ken", "No Team", "Team Brad", "Team Brad", "Team Brad", "Team Ken", "No Team", "Team Austin", "Team Austin", "Team Colby", "Team Colby", "Team Julia"), stringsAsFactors = FALSE
 )
@@ -54,7 +51,11 @@ contestant_names <- c("Brad Rutter", "Ken Jennings", "James Holzhauer", "David M
 contestants
 ```
 
-```{r dataScraping, echo = FALSE, warning = FALSE}
+Next, I created my main data frame, which contains a record of each game a contestant has played of Jeopardy! and some relevant stats for each game. The structure is as follows:
+
+```{r mainTableInit, echo = FALSE, warning = FALSE}
+game_level_df <- data.frame(Column = c("Contestant", "GameIdForUrl", "GameId", "Date", "FinalScore", "Outcome", "GameFormat", "TournamentName", "CoryatScore"), Definition = c("Full Name of Contestant", "The Game ID that will be passed into the URL for scraping", "The official Jeopardy! Game ID", "The date the episode premiered", "The contestants final score (not necessarily winnings)", "Contestant's placement in that game. Also notes if game was an accumulated score, such as a Tournament Final", "Was the game part of a tournament or the regular season", "Tournament name, or regular season if not a tournament", "Score unadjusted for Daily Doubles and Final Jeopardy"), Type = c("character()", "integer()", "integer()", "character()", "integer()", "character()", "character()", "character()", "integer()"))
+game_level_df
 game_level_df <- data.frame(Contestant = character(),
                             GameIdForUrl = integer(),
                             GameId = integer(),
@@ -66,7 +67,11 @@ game_level_df <- data.frame(Contestant = character(),
                             CoryatScore = integer(),
                             stringsAsFactors = FALSE
 )
+```
 
+
+
+```{r mainTableScraping, echo=FALSE, warning=FALSE}
 for (row in 1:nrow(contestants)) {
   contestant <- contestants[row, 1]
   player_id <- contestants[row, 2]
