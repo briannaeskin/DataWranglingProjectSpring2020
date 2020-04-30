@@ -1,3 +1,9 @@
+library(tidyverse)
+library(rvest)
+library(stringr)
+library(purrr)
+options(timeout = 400000)
+options(scipen = 999999)
 
 getGameIdsForUrl <- function(player_id) {
   player_id_url <- paste0("http://www.j-archive.com/showplayer.php?player_id=", player_id) %>%
