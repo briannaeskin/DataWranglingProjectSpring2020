@@ -4,8 +4,10 @@ author: "Brianna Eskin"
 date: "4/14/2020"
 output: pdf_document
 ---
-```{r packages, echo=FALSE, warning=FALSE}
+```{r packages, echo=FALSE, warning=FALSE, include=FALSE}
 source("C:\\Users\\Brianna\\Documents\\R\\597\\Final Project\\DataWranglingProjectSpring2020\\functions.r")
+options(timeout = 400000)
+options(scipen = 999999)
 ```
 
 ## Introduction
@@ -48,7 +50,6 @@ contestants <- data.frame(
   Contestants = c("Brad Rutter", "Brad Rutter", "Brad Rutter", "Ken Jennings", "Ken Jennings", "James Holzhauer", "David Madden", "Larissa Kelly", "Larissa Kelly", "Matt Jackson", "Jason Zuffranieri", "Roger Craig", "Roger Craig", "Colby Burnett", "Colby Burnett", "Julia Collins"), playerIds = c(278, 622, 12536, 661, 12547, 12983, 1963, 4956, 12539, 10266, 12824, 6976, 12550, 8057, 12537, 9517), AllStarsTeam = c("Team Brad", "Team Brad", "Team Brad", "Team Ken", "Team Ken", "No Team", "Team Brad", "Team Brad", "Team Brad", "Team Ken", "No Team", "Team Austin", "Team Austin", "Team Colby", "Team Colby", "Team Julia"), stringsAsFactors = FALSE
 )
 contestant_names <- c("Brad Rutter", "Ken Jennings", "James Holzhauer", "David Madden", "Larissa Kelly", "Matt Jackson", "Jason Zuffranieri", "Roger Craig", "Colby Burnett", "Julia Collins")
-head(contestants)
 ```
 
 Next, I created my main data frame, which contains a record of each game a contestant has played of Jeopardy! and some relevant stats for each game. The structure is as follows:
@@ -109,9 +110,15 @@ game_level_df %>%
 ```
 
 ## All-Time Winnings
-<Now talk about how I separated regular season winnings from tournament winnings, and output bar graph>
+The first piece of data I am planning to analyze is a breakdown of how much money each contestant has earned over different tournaments versus regular season play. I will store the tournament winnings in a new table, tournament_winnings_df, whose structure is:
 
-```{r AllTimeWinnings, echo = FALSE}
+```{r AllTimeWinningsSetup, echo = FALSE}
+tournament_winnings_df <- data.frame(
+  Columns = c("Contestant", "TournamentName", "Outcome", "Winnings"),
+  Definition = c("Contestant Name", "Tournament Name", "Contestant's performance in final game they competed", "How much money was won - not necessarily their final score"),
+  Type = c("character()", "character()", "character()", "integer()")
+)
+tournament_winnings_df
 tournament_winnings_df <- data.frame(
   Contestant = character(),
   TournamentName = character(),
@@ -119,6 +126,11 @@ tournament_winnings_df <- data.frame(
   Winnings = integer(),
   stringsAsFactors = FALSE
 )
+```
+
+To extract the winnings for each tournament a contestant played in, I pulled the unique Contestant/TournamentName pair from my main game level dataframe. Then, filtering through that dataframe, I went back into my main game level dataframe and pulled the last game a contestant played in that specific tournament based on the max gameId. I then checked if the game was an Accumulated Total. If it was, I had to scrape a new table from the scores site for that particular game, which was the table that reflected the accumulated scores over the multiple games in that round of a tournament (usually a finals). From here, I was able to pull the tournament outcome in a similar fashion to how that information was pulled for the main game level dataframe. If the game wasn't an accumulated total, all I needed to do was pull the outcome from my main game level dataframe. I was then able to pull winnings from the Outcome using the regular expression "(?<=:\\s)[\\$\\d+,]+".
+
+```{r AllTimeWinningsScrapingTournament, echo=FALSE}
 game_level_df_tournament <- game_level_df %>%
   filter(TournamentName != "Regular Season") %>%
   select(Contestant, TournamentName) %>%
@@ -151,7 +163,40 @@ winnings_df <- winnings_df %>%
   rbind(tournament_winnings_df) %>%
   mutate(Format = ifelse(TournamentName == "Regular Season", "Regular Season", "Tournament"))
 ```
-<Talk about now plotting graphs>
+
+Next, I needed to clean the data pertaining to the regular season winnings. For the most part, the winnings for a particular game could be pulled from the FinalScore column in my main game level dataframe. The exception to this is when a contestant loses. In Jeopardy! regular season play, third place contestants leave with \$1000 and second place contestants leave with \$2000. In addition, prior to Season 20, which premiered September 8, 2003, there was a 5 game limit for Champions, meaning if they went 5 consecutive games without losing, they were "retired" and three new contestants played the next game. One of the contestants, Brad Rutter, played his original Jeopardy run under this rule, so when pulling the winnings for Brad, I was always able to use the FinalScore, since his winnings in regular season play always matched what he earned. For everyone else, I had to pull their final regular season game using the max gameId, since their last game would have been the game they lost. I then pulled the winnings from the Outcome in a similar fashion to how I did for the tournament winnings, and adjusted the FinalScore for that game only.
+
+```{r AllTimeWinningsScrapingRegularSeason, echo=FALSE}
+game_level_df_regular_season <- game_level_df %>%
+  filter(TournamentName == "Regular Season") %>%
+  select(Contestant, GameId, TournamentName, FinalScore, Outcome)
+for (contestant in contestant_names) {
+    if(contestant != "Brad Rutter") {
+    game_level_df_regular_season_filtered <- game_level_df_regular_season %>%
+      filter(Contestant == contestant) %>%
+      filter(GameId == max(GameId))
+    gameId <- game_level_df_regular_season_filtered$GameId
+    winnings <- str_extract(game_level_df_regular_season_filtered$Outcome,"(?<=:\\s).*") %>%
+      str_replace_all("\\$|,", "") %>%
+      as.numeric()
+    game_level_df_regular_season[game_level_df_regular_season$GameId == gameId, "FinalScore"] <- winnings
+  }
+}
+```
+
+Once I had two separate tables, one for the tournament winnings and one for regular season winnings, I merged the two together using rbind.
+
+```{r AllTimeWinningsMerge, echo=FALSE}
+winnings_df <- game_level_df_regular_season %>%
+  select(Contestant, TournamentName, Outcome, FinalScore)
+colnames(winnings_df)[4] <- "Winnings"
+winnings_df <- winnings_df %>%
+  rbind(tournament_winnings_df) %>%
+  mutate(Format = ifelse(TournamentName == "Regular Season", "Regular Season", "Tournament"))
+```
+
+Now that I have one table which stores the winnings for each Jeopardy! contestant, I was able to plot a graph of winnings for each Jeopardy contestant. I chose to use a bar graph where the fill was the Format (Regular Season or Tournament).
+
 ```{r winningsPlots, echo = FALSE}
 winnings_df %>%
   select(Contestant, Format, Winnings) %>%
@@ -163,6 +208,8 @@ winnings_df %>%
   ggtitle("Earnings of Top Ten All-Time Winning Jeopardy Contestants") +
   theme(axis.text.x = element_text(angle = 90))
 ```
+
+
 
 ```{r winningsPlot2, echo=FALSE}
 winnings_df %>%
