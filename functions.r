@@ -6,8 +6,8 @@ options(timeout = 400000)
 options(scipen = 999999)
 
 getGameIdsForUrl <- function(player_id) {
-  player_id_url <- paste0("http://www.j-archive.com/showplayer.php?player_id=", player_id) %>%
-    read_html() %>%
+  player_id_url <- paste0("http://www.j-archive.com/showplayer.php?player_id=", player_id)
+  player_id_url <- read_html(url(player_id_url)) %>%
     html_nodes("a") %>%
     map(xml_attrs) %>%
     map_df(~as.list(.))
@@ -23,10 +23,10 @@ getGameIdsForUrl <- function(player_id) {
 getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
   contestant_first_name <- contestant %>%
     str_extract("^\\w+")
-  game_url <- paste0("http://www.j-archive.com/showgame.php?game_id=", gameIdForUrl) %>%
-    read_html()
-  scores_url <- paste0("http://www.j-archive.com/showscores.php?game_id=", gameIdForUrl) %>%
-    read_html()
+  game_url <- paste0("http://www.j-archive.com/showgame.php?game_id=", gameIdForUrl)
+  game_url <-  read_html(url(game_url))
+  scores_url <- paste0("http://www.j-archive.com/showscores.php?game_id=", gameIdForUrl)
+  scores_url <-  read_html(url(scores_url))
   game_comments <- game_url %>%
     html_nodes("#game_comments") %>% .[1] %>%
     toString()
