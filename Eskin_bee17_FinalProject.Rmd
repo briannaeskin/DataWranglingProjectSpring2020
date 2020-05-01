@@ -225,13 +225,13 @@ winnings_df %>%
   theme(axis.text.x = element_text(angle = 90))
 ```
 
-## Scores Plotting
+## Scores Per Game
 
-<Talk about how we will plot scores (not winnings) over course of regular season>
+The next statistic I will be looking at is each contestant's final score (not necessarily winnings) for each game during their initial appaearance on Jeopardy!. For Colby Burnett, that is the Teacher's Tournament, and for every other contestant, it's their regular season appearance. I will be plotting two sets of graphs. The first graph is a tracing of each contestant's final score over the course of their run, all in one plot. The second plot is split into facets for each contestant.
 
 ```{r scorePlotting, echo=FALSE}
 game_scores_df_regular_season <- game_level_df %>%
-  filter(TournamentName == "Regular Season") %>%
+  filter(TournamentName %in% c("Regular Season","Teachers Tournament")) %>%
   select(Contestant, GameId, FinalScore) %>%
   group_by(Contestant) %>%
   mutate(GamePlayed = min_rank(GameId))
@@ -250,11 +250,15 @@ ggplot(data = game_scores_df_regular_season,mapping = aes(x = GamePlayed, y = Fi
   facet_wrap(~ Contestant, nrow = 5)
 ```
 
-<Discuss skews due to Brad's winnings being pre-doubled and James' due to aggresive wagering. Move on to Coryat Score>
+Two of the most interesting observations that can be made by looking at these graphs is how low Brad's scores are in comparison to everyone else, and how high James's scores are compared to everyone else. As previously mentioned, Brad's original Jeopardy! appearance was during an era when clues were worth half of the value they are worth today. Therefore, Brad's scoring potential was only 50% of that of the other contestants. As for James, his strategy was to hunt for and bet large on Daily Doubles. That, combined with his high buzzer speed and accuracy, helped him cross the \$100,000 mark in a game on multiple occassions.
+
+Because of a lot of other variables such as luck, risk aversion, and earning potential due to clue values and Daily Double placement, the score at the end of the game is not always indicative of who played the best that game. There are often games where a contestant played better than their opponents, but lost because one of the other contestants hit all of the Daily Doubles or because they themselves bet big on a Daily Double and missed. The next statistic we will discuss, the Coryat Score, takes more of these outside variables into account. 
 
 ## Coryat Score
 
-<Discuss what Coryat Score is, origin, and other manipulation done to data (i.e. Brad's doubling for regular season games), will plot max and average scores, also will exclude All Star games since that was three person game>
+According to the J-Archive!, the term Coryat Score was coined by Season 12 2-game champion Karl Coryat, and is the contestant's score disregarding all wagering. It was originally created as a metric that could be used by viewers at home to gauge their performance against the contestants. This score has since been adapted by the J-Archive to reflect a "raw" score for each game. Final Jeopardy is not taken into account, and for Daily Doubles, there is no penalty for an incorrect response, since you are forced to give a response on a Daily Double, whereas if it was a regular clue you aren't forced to buzz in if you do not know the answer. However, the trade off is that if answered correctly, the clue is worth its original value.
+
+The below graph plots each contestant's max/average Coryat scores, as well as their max/average final scores, to give an idea of how much Final Jeopardy and Daily Doubles play a role in a contestant's final score. This time, to account for Brad playing during the pre-doubled values era, his regular season final scores and Coryat scores have been doubled here. These plots are for each game a contestant has played in, excluding the All-Star games. I excluded the All-Star games from this analysis because each round was played by a different contestant in a team, and therefore the Coryat scores and final scores cannot be accurately calculated.
 
 ```{r coryatScores, echo=FALSE, warning = FALSE}
 coryat_scores_df <- game_level_df %>%
@@ -282,3 +286,4 @@ ggplot(data = coryat_scores_df, mapping = aes(x = Contestant, y = Score, color =
   
 ```
 
+Now by looking at this plot, especially when compared to the game level final scores, we see that when taking into account Coryat's and doubled clue values, Brad's scores are more in line with other contestants. Similarly, while James still has one of the highest max and average Coryat scores, the variance is a lot less, being around \$10,000 higher than most of the other contestants, and being much more comparable to Ken's scores.
