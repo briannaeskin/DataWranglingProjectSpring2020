@@ -5,7 +5,7 @@ date: "4/14/2020"
 output: pdf_document
 ---
 ```{r packages, echo=FALSE, warning=FALSE, include=FALSE}
-source("C:\\Users\\Brianna\\Documents\\R\\597\\Final Project\\DataWranglingProjectSpring2020\\functions.r")
+source("functions.r")
 library(knitr)
 options(timeout = 400000)
 options(scipen = 999999)
@@ -39,6 +39,8 @@ I was interested in data pertaining to Jeopardy! because of the personal connect
 For my project, I will be scraping data from the J-Archive (https://j-archive.com/), which is a fan run archive of most of the games from the Alex Trebek era of Jeopardy!. The site is broken down to different pages for each individual game. To find the different games each contestant played in, I will scrape from their different player profile pages, 16 pages in total, which were found by manually checking the j-archive, as one player can have multiple player pages. An example page for Jason Zuffranieri is http://www.j-archive.com/showplayer.php?player_id=12824. On this page, I will be pulling the various games each contestant played in and scraping data from that specific game's web page. An example is based on Jason's player page, I know he played in Game #8046, which is also the 36th season permiere. So I will be scraping data from that page, http://www.j-archive.com/showgame.php?game_id=6410. For that specific game, I will then be scraping data from the score breakdown page, which for the example game #8046 is http://www.j-archive.com/showscores.php?game_id=6410. I will be repeating this process for each game a contestant has played in. Using Jason as an example, he has played in 20 regular season games of Jeopardy!, so I will be scraping 20 game level sites and 20 score breakdown sites.
   
 <Should I potentially add screenshots here?>
+
+All of the code for this project can be found at: https://github.com/briannaeskin/DataWranglingProjectSpring2020
 
 ## Data Scraping
 
@@ -101,6 +103,7 @@ for (row in 1:nrow(contestants)) {
 game_level_df <- game_level_df %>%
   distinct()
 game_level_df$Outcome <- as.character(game_level_df$Outcome)
+write_csv(game_level_df, "JeopardyTop10PlayerGames.csv")
 ```
 
 Below is a sample output for Jeopardy contestant Roger Craig.
@@ -111,6 +114,8 @@ game_level_df %>%
   arrange(desc(GameId)) %>%
   head()
 ```
+
+The full data frame has also been exported as a csv: https://github.com/briannaeskin/DataWranglingProjectSpring2020/blob/master/JeopardyTop10PlayerGames.csv
 
 ## All-Time Winnings
 The first piece of data I am planning to analyze is a breakdown of how much money each contestant has earned over different tournaments versus regular season play. I will store the tournament winnings in a new table, tournament_winnings_df, whose structure is:
@@ -263,7 +268,7 @@ According to the J-Archive!, the term Coryat Score was coined by Season 12 2-gam
 
 The below graph plots each contestant's max/average Coryat scores, as well as their max/average final scores, to give an idea of how much Final Jeopardy and Daily Doubles play a role in a contestant's final score. This time, to account for Brad playing during the pre-doubled values era, his regular season final scores and Coryat scores have been doubled here. These plots are for each game a contestant has played in, excluding the All-Star games. I excluded the All-Star games from this analysis because each round was played by a different contestant in a team, and therefore the Coryat scores and final scores cannot be accurately calculated.
 
-```{r coryatScores, echo=FALSE, warning = FALSE}
+```{r coryatScoresPlotting, echo=FALSE, warning = FALSE}
 coryat_scores_df <- game_level_df %>%
   filter(TournamentName != "All-Star Games") %>%
   rowwise() %>%
@@ -295,7 +300,7 @@ Now by looking at this plot, especially when compared to the game level final sc
 
 As mentioned, luck plays a major factor in one's success on Jeopardy!. There is luck in the categories that are on the board- are they aligned with a contestant's strengths or are they aligned with an opponent's strengths? There is luck in who you are playing against- do they have strong reflexes and can they ring in on the buzzer faster? One of the most luck factors are the three Daily Doubles in the game- can you hit the them, are you confident in your abilities to answer the question in that specific category, and can you provide the correct response? Below, we look at each contestant's Daily Double hit ratio per game (max is 3) and the percentage of Daily Doubles they answered correctly, across every game except for the All-Star tournament:
 
-```{r DailyDoubles, echo = FALSE}
+```{r DailyDoublesTable, echo = FALSE}
 daily_double_df <- game_level_df %>%
   filter(TournamentName != "All-Star Games") %>%
   select(Contestant, DailyDoublesRight, DailyDoublesWrong) %>%
@@ -307,7 +312,7 @@ daily_double_df
 
 Let's compare this to their overall accuracy:
 
-```{r Accuracy, echo = FALSE}
+```{r AccuracyTable, echo = FALSE}
 overall_accuracy_df <- game_level_df %>%
   filter(TournamentName != "All-Star Games") %>%
   select(Contestant, QuestionsRight, QuestionsWrong) %>%
