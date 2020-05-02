@@ -185,8 +185,3 @@ getRowForTournamentWinningsTable <- function(contestant, tournament) {
   )
   return(rowForTournamentWinningsTable)
 }
-
-##getRowForTournamentWinningsTable("Brad Rutter", "Tournament of Champions")
-##view(game_level_df)
-##as_tibble(game_level_df)
-##rowForTournamentWinningsTable$Winnings
