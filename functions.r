@@ -103,13 +103,20 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
     as.data.frame() %>%
     t() %>%
     as.data.frame()
-  colnames(coryat_table) <- c("Contestant", "Score", "Outcome")
-  coryat_score <- coryat_table %>%
+  coryat_table <- coryat_table %>%
+    separate(col = "V3", into = c("V4", "V5"), sep = ",", remove = FALSE) %>%
+    separate(col = "V4", into = c("V6", "V7"), sep = "\\sR\\(including\\s|\\sDD|\\sDDs\\)|\\sR") %>%
+    separate(col = "V5", into = c("V8", "V9"), sep = "\\sW\\(including\\s|\\sDD|\\sDDs\\)|\\sW") %>%
+    select("V1", "V2", "V6", "V7", "V8", "V9")
+  coryat_table$V7 <- sub("^$", 0, coryat_table$V7)
+  coryat_table$V9 <- sub("^$", 0, coryat_table$V9)
+  colnames(coryat_table) <- c("Contestant", "Score", "QuestionsRight", "DailyDoublesRight", "QuestionsWrong", "DailyDoublesWrong")
+  coryat_table <- coryat_table %>%
     filter(Contestant %in% c(contestant_first_name, allStarTeam))
-  if(nrow(coryat_score) == 0){
+  if(nrow(coryat_table) == 0){
     return("Don't include")
   }
-  coryat_score <- coryat_score$Score %>%
+  coryat_score <- coryat_table$Score %>%
     str_extract("\\d+,\\d+|\\d+") %>%
     str_replace_all(",", "") %>%
     as.numeric()
@@ -123,6 +130,10 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
     GameFormat = format,
     TournamentName = tournament_name,
     CoryatScore = coryat_score,
+    QuestionsRight = as.numeric(coryat_table[1,3]),
+    DailyDoublesRight = as.numeric(coryat_table[1,4]),
+    QuestionsWrong = as.numeric(coryat_table[1,5]),
+    DailyDoublesWrong = as.numeric(coryat_table[1,6]),
     stringsAsFactors = FALSE
   )
   return(rowForTable)
