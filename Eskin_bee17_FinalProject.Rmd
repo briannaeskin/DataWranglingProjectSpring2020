@@ -7,8 +7,10 @@ output: pdf_document
 ```{r packages, echo=FALSE, warning=FALSE, include=FALSE}
 source("functions.r")
 library(knitr)
+library(kableExtra)
 options(timeout = 400000)
 options(scipen = 999999)
+options(knitr.table.format = "latex")
 ```
 
 ## Introduction
@@ -46,8 +48,12 @@ All of the code for this project can be found at: https://github.com/briannaeski
 
 The first thing I did to start scraping data was I created a static data frame called contestants, whose structure is as below:
 
+
 ```{r contestants, echo = FALSE}
 contestants <- data.frame(ColumnName = c("Contestants", "playerIds", "AllStarsTeam"), Definition = c("Full name of a top 10 all-time winning contestant on Jeopardy!", "Player ID as extracted from the j-archive", "The team a contestant played on during the All-Star tournament in 2019- marked as No Team if not a participant"), Type = c("character()", "integer()", "character()"))
+kable(contestants, caption = "contestants Table Structure") %>%
+  column_spec(2, width = "25em") %>%
+  kable_styling(latex_options = "HOLD_position")
 contestants <- data.frame(
   Contestants = c("Brad Rutter", "Brad Rutter", "Brad Rutter", "Ken Jennings", "Ken Jennings", "James Holzhauer", "David Madden", "Larissa Kelly", "Larissa Kelly", "Matt Jackson", "Jason Zuffranieri", "Roger Craig", "Roger Craig", "Colby Burnett", "Colby Burnett", "Julia Collins"), playerIds = c(278, 622, 12536, 661, 12547, 12983, 1963, 4956, 12539, 10266, 12824, 6976, 12550, 8057, 12537, 9517), AllStarsTeam = c("Team Brad", "Team Brad", "Team Brad", "Team Ken", "Team Ken", "No Team", "Team Brad", "Team Brad", "Team Brad", "Team Ken", "No Team", "Team Austin", "Team Austin", "Team Colby", "Team Colby", "Team Julia"), stringsAsFactors = FALSE
 )
@@ -57,7 +63,10 @@ contestant_names <- c("Brad Rutter", "Ken Jennings", "James Holzhauer", "David M
 Next, I created my main data frame, which contains a record of each game a contestant has played of Jeopardy! and some relevant stats for each game. The structure is as follows:
 
 ```{r mainTableInit, echo = FALSE, warning = FALSE}
-game_level_df <- data.frame(ColumnName = c("Contestant", "GameIdForUrl", "GameId", "Date", "FinalScore", "Outcome", "GameFormat", "TournamentName", "CoryatScore"), Definition = c("Full Name of Contestant", "The Game ID that will be passed into the URL for scraping", "The official Jeopardy! Game ID", "The date the episode premiered", "The contestants final score (not necessarily winnings)", "Contestant's placement in that game. Also notes if game was an accumulated score, such as a Tournament Final", "Was the game part of a tournament or the regular season", "Tournament name, or regular season if not a tournament", "Score unadjusted for Daily Doubles and Final Jeopardy"), Type = c("character()", "integer()", "integer()", "character()", "integer()", "character()", "character()", "character()", "integer()"))
+game_level_df <- data.frame(ColumnName = c("Contestant", "GameIdForUrl", "GameId", "Date", "FinalScore", "Outcome", "GameFormat", "TournamentName", "CoryatScore", "QuestionsRight", "DailyDoublesRight", "QuestionsWrong", "DailyDoublesWrong"), Definition = c("Full Name of Contestant", "The Game ID that will be passed into the URL for scraping", "The official Jeopardy! Game ID", "The date the episode premiered", "The contestants final score (not necessarily winnings)", "Contestant's placement in that game. Also notes if game was an accumulated score, such as a Tournament Final", "Was the game part of a tournament or the regular season", "Tournament name, or regular season if not a tournament", "Score unadjusted for Daily Doubles and Final Jeopardy", "Number of questions answered correctly", "Number of Daily Doubles answered correctly", "Number of questions answered incorrectly", "Number of Daily Doubles answered incorrectly"), Type = c("character()", "integer()", "integer()", "character()", "integer()", "character()", "character()", "character()", "integer()", "integer()", "integer()", "integer()", "integer()"))
+kable(game_level_df, caption = "Main Table Structure") %>%
+  column_spec(2, width = "25em") %>%
+  kable_styling(latex_options = "HOLD_position")
 game_level_df <- data.frame(Contestant = character(),
                             GameIdForUrl = integer(),
                             GameId = integer(),
@@ -106,15 +115,6 @@ game_level_df$Outcome <- as.character(game_level_df$Outcome)
 write_csv(game_level_df, "JeopardyTop10PlayerGames.csv")
 ```
 
-Below is a sample output for Jeopardy contestant Roger Craig.
-
-```{r dataScrapingOutput, echo = FALSE}
-game_level_df %>%
-  filter(Contestant == "Roger Craig") %>%
-  arrange(desc(GameId)) %>%
-  head()
-```
-
 The full data frame has also been exported as a csv: https://github.com/briannaeskin/DataWranglingProjectSpring2020/blob/master/JeopardyTop10PlayerGames.csv
 
 ## All-Time Winnings
@@ -126,7 +126,8 @@ tournament_winnings_df <- data.frame(
   Definition = c("Contestant Name", "Tournament Name", "Contestant's performance in final game they competed", "How much money was won - not necessarily their final score"),
   Type = c("character()", "character()", "character()", "integer()")
 )
-tournament_winnings_df
+kable(tournament_winnings_df, caption = "Tournament Winnings Table Structure") %>%
+  kable_styling(latex_options = "HOLD_position")
 tournament_winnings_df <- data.frame(
   Contestant = character(),
   TournamentName = character(),
@@ -307,7 +308,8 @@ daily_double_df <- game_level_df %>%
   group_by(Contestant) %>%
   summarize(GamesPlayed = n(), DailyDoublesTotal = sum(DailyDoublesRight, DailyDoublesWrong), DailyDoublesPerGame = DailyDoublesTotal/GamesPlayed, DailyDoubleRightPct = (sum(DailyDoublesRight)/DailyDoublesTotal)*100) %>%
   select(Contestant, DailyDoublesPerGame, DailyDoubleRightPct)
-daily_double_df
+kable(daily_double_df, caption = "Daily Double Stats") %>%
+  kable_styling(latex_options = "HOLD_position")
 ```
 
 Let's compare this to their overall accuracy:
@@ -319,7 +321,8 @@ overall_accuracy_df <- game_level_df %>%
   group_by(Contestant) %>%
   summarize(GamesPlayed = n(), QuestionsTotal = sum(QuestionsRight, QuestionsWrong), QuestionsAnsweredPerGame = QuestionsTotal/GamesPlayed, QuestionsRightPct = (sum(QuestionsRight)/QuestionsTotal)*100) %>%
   select(Contestant, QuestionsAnsweredPerGame, QuestionsRightPct)
-overall_accuracy_df
+kable(overall_accuracy_df, caption = "Overall Response Stats") %>%
+  kable_styling(latex_options = "HOLD_position")
 ```
 
 With 60 questions in a standard Jeopardy! match (excluding Final Jeopardy and assuming every clue is revealed), three contestants who are evenly matched would answer 20 questions correctly, with one being a Daily Double. Each contestant is over those numbers, with 4 players, James, Jason, Ken, and Roger, answering 50% of the questions. This usually means strong buzzer speed, and that comfort ringing in on clues is key to being successful on Jeopardy!. In addition, each player has a very high accuracy on questions they attempt to answer, proving that they can also execute once they do ring in. 
