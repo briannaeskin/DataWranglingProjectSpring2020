@@ -94,6 +94,7 @@ As a next step, I iterated through this list of gameIds and passed each one into
 4. GameFormat: From the game level site, I extracted nodes called "#game_comments", which normally inlucdes information such as the contestants playing in that game, any special highlights, and the tournament name, if applicable. To find whether or not a game was part of the regular season or tournament, I read the first of these "#game_comments" nodes, and set the format to Tournament if the regular expression "Tournament|Masters|Decade|Star" was found. Another possible option for GameFormat is Exhibition, which refers to the IBM Challenge in 2011 in which Brad Rutter and Ken Jennings played Jeopardy against IBM Watson. I set the GameFormat to Exhibition if I matched the expression "IBM". Otherwise, the format was set to Regular Season.
 5. TournamentName: To pull the tournament name, I used a series of ifelse functions checking various regular expressions to match the different tournament names that have occurred over the years. If there were no matches, the TournamentName was set to Regular Season.
 6. Coryat Score: I followed the exact same steps as what were used to pull the final score, the only difference is that I pulled the last table from the scores site, instead of always pulling the 4th table.
+7. QuestionsRight, DailyDoublesRight, QuestionsWrong, DailyDoublesWrong: I followed slightly similar steps to Outcome, because all of these attributes could be extracted from the third column of the last table from the scores site. To extract all of these values from one cell, I first split the column into two by a comma into a "right" column and a "wrong" column, and then split those columns each into two using the regular expressions "\\sR\\(including\\s|\\sDD|\\sDDs\\)|\\sR" and "\\sW\\(including\\s|\\sDD|\\sDDs\\)|\\sW", respectively.
 
 ```{r mainTableScraping, echo=FALSE, warning=FALSE}
 for (row in 1:nrow(contestants)) {
@@ -247,13 +248,13 @@ game_scores_df_regular_season <- game_level_df %>%
 ggplot(data = game_scores_df_regular_season,mapping = aes(x = GamePlayed, y = FinalScore, color = Contestant)) +
   geom_point() +
   geom_line() +
-  ggtitle("Final Scores for All-Time Winning Jeopardy Contestants - Regular Season") +
+  ggtitle("Final Scores - Regular Season") +
   xlab("Game") +
   ylab("Final Score")
 ggplot(data = game_scores_df_regular_season,mapping = aes(x = GamePlayed, y = FinalScore)) +
   geom_point() +
   geom_line() +
-  ggtitle("Final Scores for All-Time Winning Jeopardy Contestants - Regular Season") +
+  ggtitle("Final Scores - Regular Season") +
   xlab("Game") +
   ylab("Final Score") +
   facet_wrap(~ Contestant, nrow = 5)
@@ -312,6 +313,8 @@ kable(daily_double_df, caption = "Daily Double Stats") %>%
   kable_styling(latex_options = "HOLD_position")
 ```
 
+To create this table, I filtered my main game level table to exclude the All-Star Games, grouped the rows by contestant, then created a few new variables using summarize()- GamesPlayed, which was equal to the number of rows, DailyDoublesTotal, which is the sum of how many Daily Doubles they answered correctly and how many were answered incorrectly, DailyDoublesPerGame, which was the DailyDoublesTotal/GamesPlayed, and DailyDoubleRightPct, which was the percentage of Daily Doubles a contestant answered correctly.
+
 Let's compare this to their overall accuracy:
 
 ```{r AccuracyTable, echo = FALSE}
@@ -325,4 +328,12 @@ kable(overall_accuracy_df, caption = "Overall Response Stats") %>%
   kable_styling(latex_options = "HOLD_position")
 ```
 
-With 60 questions in a standard Jeopardy! match (excluding Final Jeopardy and assuming every clue is revealed), three contestants who are evenly matched would answer 20 questions correctly, with one being a Daily Double. Each contestant is over those numbers, with 4 players, James, Jason, Ken, and Roger, answering 50% of the questions. This usually means strong buzzer speed, and that comfort ringing in on clues is key to being successful on Jeopardy!. In addition, each player has a very high accuracy on questions they attempt to answer, proving that they can also execute once they do ring in. 
+To create this table, I filtered my main game level table to exclude the All-Star Games, grouped the rows by contestant, then created a few new variables using summarize()- GamesPlayed, which was equal to the number of rows, QuestionsTotal, which is the sum of how many Daily Doubles they answered correctly and how many were answered incorrectly, QuestionsAnsweredPerGame, which was the DailyDoublesTotal/GamesPlayed, and QuestionsRightPct, which was the percentage of Daily Doubles a contestant answered correctly.
+
+With 60 questions in a standard Jeopardy! match (excluding Final Jeopardy and assuming every clue is revealed), three contestants who are evenly matched would answer 20 questions correctly, with one being a Daily Double. Each contestant is over those numbers, with 4 players, James, Jason, Ken, and Roger, answering 50% of the questions. This usually means strong buzzer speed, and that comfort ringing in on clues is key to being successful on Jeopardy!. In addition, each player has a very high accuracy on questions they attempt to answer, proving that they can also execute once they do ring in.
+
+## Conclusion
+
+Every contestant discussed in this report is a Jeopardy! legend for one reason or another. Brad Rutter has won almost every tournament he has appeared in, losing in regulation play for the first time ever in the Greatest of All Time tournament earlier this year (The IBM Challenge is considered an exhibition for record purposes). Ken Jennings and James Holzhauer are known for their long streaks and high regular season winnings, winning over \$2million each. Julia Collins, Jason Zuffranieri, Matt Jackson, and David Madden round out the Top 6 of longest winnings streaks and highest regular season earnings, with David also being on the winning team in last year's All-Star Games. Larissa Kelly was the first woman to win over 5 games of Jeopardy! after the win limit was lifted, and is currently the highest winning female player. Roger Craig previously held the record for highest single day earnings and was the player to revolutionize the "Go Big or Go Home" approach to Daily Doubles. Colby Burnett was the first (and only) contestant to win both the Teacher's Tournament and the Tournament of Champions. Over the course of this report, we took closer looks at their winnings and how they were earned, their game level scores, Coryat scores, and their response accuracy. While some contestants excelled more in certain categories than others, the common theme amongst them is that every facet of their gameplay was exceptionally high, and showed that both skill and a little bit of luck can help anyone succeed at Jeopardy!
+
+Over this project, my goal was to apply as many of the techniques we learned in class as possible, while still making sense in the context of the data I was wrangling. I scraped over 600 webpages and cleaned data from all of them, created data frames, wrote data to a csv file, and generated tables using knitr. I utilized many features of the tidyverse, including filtering and creating new variables in a data frame, created different types of plots, such as bar graphs, line graphs, and facet graphs. Given the different variations of tournaments and matches Jeopardy! has done over the years as they continue to innovate their show, that made some aspects of web scraping and cleaning very difficult, and a lot of my project effort was spent just on creating a main data source from which I could create the rest of my plots and charts from. Towards the last few days of my project, I encountered some issues with Latex, and an entire day was wasted reinstalling Latex. Also, as someone whose R experience is limited to undergrad class experience only, this project helped me get more comfortable with the software and RStudio, as up until this class I only ever used the Console, which is more difficult to use as the scope of a problem gets larger and larger. Overall, I learned a lot from this class, and this project. 
