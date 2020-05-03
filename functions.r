@@ -6,11 +6,14 @@ options(timeout = 400000)
 options(scipen = 999999)
 
 getGameIdsForUrl <- function(player_id) {
+  #Function to scrape the player site with a given player id, and pulls the list of game ids that will be used to scrape further sites
   player_id_url <- paste0("http://www.j-archive.com/showplayer.php?player_id=", player_id)
+  
   player_id_url <- read_html(url(player_id_url)) %>%
     html_nodes("a") %>%
     map(xml_attrs) %>%
     map_df(~as.list(.))
+  
   game_id_list <-player_id_url %>%
     select(href) %>%
     mutate(InScope = str_detect(.$href, "game_id")) %>%
@@ -21,15 +24,22 @@ getGameIdsForUrl <- function(player_id) {
 }
 
 getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
+  #Function to pull all variables needed for main table
+  
+  #Contestant first name
   contestant_first_name <- contestant %>%
     str_extract("^\\w+")
+  
   game_url <- paste0("http://www.j-archive.com/showgame.php?game_id=", gameIdForUrl)
   game_url <-  read_html(url(game_url))
   scores_url <- paste0("http://www.j-archive.com/showscores.php?game_id=", gameIdForUrl)
   scores_url <-  read_html(url(scores_url))
+  
+  #Game comments, used to find tournament information
   game_comments <- game_url %>%
     html_nodes("#game_comments") %>% .[1] %>%
     toString()
+  
   if(str_detect(game_comments, "Jeopardy! Round only")) {
     return("Don't include")
   }
@@ -59,6 +69,8 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
   } else {
     tournament_name <- "Regular Season"
   }
+  
+  #Get game id and date episode aired
   game_id_and_date <- game_url %>%
     html_nodes("h1")
   game_id <- game_id_and_date %>%
@@ -66,6 +78,8 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
     as.numeric()
   game_date <- game_id_and_date %>%
     str_extract("(?<=-\\s).*(?=\\<)")
+  
+  #Final Jeopardy table 
   final_jeopardy_table <- scores_url %>%
     html_nodes("table") %>% .[4] %>%
     html_table(fill = TRUE) %>%
@@ -79,6 +93,8 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
   } else {
     colnames(final_jeopardy_table) <- c("Contestant", "Score", "Outcome")
   }
+  
+  #Score at the end of the game (not necessarily winnings)
   final_score <- final_jeopardy_table %>%
     filter(Contestant %in% c(contestant_first_name, allStarTeam))
   if(nrow(final_score) == 0){
@@ -88,6 +104,8 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
     str_extract("\\d+,\\d+|\\d+") %>%
     str_replace_all(",", "") %>%
     as.numeric()
+  
+  #Outcome
   outcome <- final_jeopardy_table %>%
     filter(Contestant %in% c(contestant_first_name, allStarTeam)) %>%
     .$Outcome
@@ -97,6 +115,8 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
   if(outcome == "") {
     outcome <- "Accumulated Game"
   }
+  
+  #Create table with Coryat scores
   coryat_table <- scores_url %>%
     html_nodes("table") %>% last() %>%
     html_table(fill = TRUE) %>%
@@ -116,10 +136,13 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
   if(nrow(coryat_table) == 0){
     return("Don't include")
   }
+  
+  #Get Coryat score
   coryat_score <- coryat_table$Score %>%
     str_extract("\\d+,\\d+|\\d+") %>%
     str_replace_all(",", "") %>%
     as.numeric()
+  
   rowForTable <- data.frame(
     Contestant = contestant,
     GameIdForUrl = gameIdForUrl,
@@ -140,6 +163,7 @@ getRowForGameLevelTable <- function(contestant, gameIdForUrl, allStarTeam) {
 }
 
 getRowForTournamentWinningsTable <- function(contestant, tournament) {
+  #Basic contestant info
   contestant_tournament_table <- game_level_df %>%
     filter(Contestant == contestant, TournamentName == tournament) %>%
     filter(GameId == max(GameId))
@@ -147,11 +171,16 @@ getRowForTournamentWinningsTable <- function(contestant, tournament) {
     filter(Contestants == contestant) %>%
     select(Contestants, AllStarsTeam) %>%
     distinct()
+  
+  #Contestant first name
   contestant_first_name <- contestant %>%
     str_extract("^\\w+")
+  
   allStarTeam <- contestants_filtered[1,2]
   gameIdForUrl <- contestant_tournament_table[1,2]
   outcome <- contestant_tournament_table[1,6]
+  
+  #Special condition for games that are part of accumulated totals, such as tournament finals
   if(outcome == "Accumulated Game") {
     tournament_scores <- paste0("http://www.j-archive.com/showscores.php?game_id=", gameIdForUrl) %>%
       read_html() %>%
@@ -168,14 +197,18 @@ getRowForTournamentWinningsTable <- function(contestant, tournament) {
       str_replace_all("\\$|,", "") %>%
       as.numeric()
   } else{
+    #Regular game (i.e. not tournament final)
     result <- str_extract(outcome,".+?(?=:)")
     winnings <- str_extract(outcome,"(?<=:\\s)[\\$\\d+,]+") %>%
       str_replace_all("\\$|,", "") %>%
       as.numeric()
   }
+  
+  #Split winnings by 3 for All-Star tournament
   if (tournament == "All-Star Games") {
     winnings <- round(winnings/3)
   }
+  
   rowForTournamentWinningsTable <- data.frame(
     Contestant = contestant,
     TournamentName = tournament,
