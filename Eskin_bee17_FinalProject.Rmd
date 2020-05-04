@@ -248,7 +248,7 @@ winnings_df %>%
   mutate(CummulativeEarnings = ifelse(is.na(CummulativeEarnings), 0, CummulativeEarnings)) %>%
   ggplot() +
   geom_bar(mapping = aes(x = Contestant, y = CummulativeEarnings, fill = TournamentName), stat ="identity") +
-  ggtitle("Earnings of Top Ten All-Time Winning Jeopardy Contestants by Tournament") +
+  ggtitle("Earnings by Tournament") +
   theme(axis.text.x = element_text(angle = 90))
 ```
 
