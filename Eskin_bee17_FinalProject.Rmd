@@ -1,7 +1,7 @@
 ---
 title: "Data Wrangling Final Project"
 author: "Brianna Eskin"
-date: "4/14/2020"
+date: "5/4/2020"
 output: pdf_document
 ---
 ```{r packages, echo=FALSE, warning=FALSE, include=FALSE}
@@ -14,6 +14,8 @@ options(knitr.table.format = "latex")
 ```
 
 ## Introduction
+
+All of the code for this project can be found at: https://github.com/briannaeskin/DataWranglingProjectSpring2020
 
 The game show Jeopardy!, created by Merv Griffin and hosted by Art Fleming, first premiered on March 30, 1964 on NBC. After a few different syndicated versions, the show as it is known today, hosted by Alex Trebek, premiered on September 10, 1984. Since its premiere, the current version of Jeopardy!, which is in its 36th season, has aired over 8000 episodes, won over 30 Daytime Emmy awards, and is often regarded as one of the greatest television shows in American television history.
 
@@ -39,8 +41,6 @@ I was interested in data pertaining to Jeopardy! because of the personal connect
 ## Data Sources
 
 For my project, I will be scraping data from the J-Archive (https://j-archive.com/), which is a fan run archive of most of the games from the Alex Trebek era of Jeopardy!. The site is broken down to different pages for each individual game. To find the different games each contestant played in, I will scrape from their different player profile pages, 16 pages in total, which were found by manually checking the j-archive, as one player can have multiple player pages. An example page for Jason Zuffranieri is http://www.j-archive.com/showplayer.php?player_id=12824. On this page, I will be pulling the various games each contestant played in and scraping data from that specific game's web page. An example is based on Jason's player page- I know he played in Game #8046, which is also the 36th season's permiere. So I will be scraping data from that page, http://www.j-archive.com/showgame.php?game_id=6410. For that specific game, I will then be scraping data from the score breakdown page, which for the example game #8046 is http://www.j-archive.com/showscores.php?game_id=6410. I will be repeating this process for each game a contestant has played in. Using Jason as an example, he has played in 20 regular season games of Jeopardy!, so I will be scraping 20 game level sites and 20 score breakdown sites.
-  
-All of the code for this project can be found at: https://github.com/briannaeskin/DataWranglingProjectSpring2020
 
 ## Data Scraping
 
@@ -130,6 +130,7 @@ write_csv(game_level_df, "JeopardyTop10PlayerGames.csv")
 The full data frame has also been exported as a csv: https://github.com/briannaeskin/DataWranglingProjectSpring2020/blob/master/JeopardyTop10PlayerGames.csv.
 
 ## All-Time Winnings
+
 The first piece of data I am planning to analyze is a breakdown of how much money each contestant has earned over different tournaments versus regular season play. I will store the tournament winnings in a new table, tournament_winnings_df, whose structure is:
 
 ```{r AllTimeWinningsSetup, echo = FALSE}
@@ -216,7 +217,11 @@ colnames(winnings_df)[4] <- "Winnings"
 winnings_df <- winnings_df %>%
   rbind(tournament_winnings_df) %>%
   mutate(Format = ifelse(TournamentName == "Regular Season", "Regular Season", "Tournament"))
+
+write_csv(winnings_df, "JeopardyTop10PlayerWinningsByAppearance.csv")
 ```
+
+This data has been written to a csv as well: JeopardyTop10PlayerWinningsByAppearance.csv
 
 Now that I have one table which stores the winnings for each Jeopardy! contestant, I was able to plot a graph of winnings for each Jeopardy contestant. I chose to use a bar graph where the fill was the Format (Regular Season or Tournament).
 
@@ -367,4 +372,4 @@ With 60 questions in a standard Jeopardy! match (excluding Final Jeopardy and as
 
 Every contestant discussed in this report is a Jeopardy! legend for one reason or another. Brad Rutter has won almost every tournament he has appeared in, losing in regulation play for the first time ever in the Greatest of All Time tournament earlier this year (The IBM Challenge is considered an exhibition for record purposes). Ken Jennings and James Holzhauer are known for their long streaks and high regular season winnings, winning over \$2million each. Julia Collins, Jason Zuffranieri, Matt Jackson, and David Madden round out the Top 6 of longest winnings streaks and highest regular season earnings, with David also being on the winning team in last year's All-Star Games. Larissa Kelly was the first woman to win over 5 games of Jeopardy! after the win limit was lifted, and is currently the highest winning female player. Roger Craig previously held the record for highest single day earnings and was the player to revolutionize the "Go Big or Go Home" approach to Daily Doubles. Colby Burnett was the first (and only) contestant to win both the Teacher's Tournament and the Tournament of Champions. Over the course of this report, we took closer looks at their winnings and how they were earned, their game level scores, Coryat scores, and their response accuracy. While some contestants excelled more in certain categories than others, the common theme amongst them is that every facet of their gameplay was exceptionally high, and showed that both skill and a little bit of luck can help anyone succeed at Jeopardy!
 
-Over this project, my goal was to apply as many of the techniques we learned in class as possible, while still making sense in the context of the data I was wrangling. I scraped over 600 webpages and cleaned data from all of them, created data frames, wrote data to a csv file, and generated tables using knitr. I utilized many features of the tidyverse, including filtering and creating new variables in a data frame, created different types of plots, such as bar graphs, line graphs, and facet graphs. Given the different variations of tournaments and matches Jeopardy! has done over the years as they continue to innovate their show, that made some aspects of web scraping and cleaning very difficult, and a lot of my project effort was spent just on creating a main data source from which I could create the rest of my plots and charts from. Towards the last few days of my project, I encountered some issues with Latex, and an entire day was wasted reinstalling Latex. Also, as someone whose R experience is limited to undergrad class experience only, this project helped me get more comfortable with the software and RStudio, as up until this class I only ever used the Console, which is more difficult to use as the scope of a problem gets larger and larger. Overall, I learned a lot from this class, and this project. 
+Over this project, my goal was to apply as many of the techniques we learned in class as possible, while still making sense in the context of the data I was wrangling. I scraped over 600 webpages and cleaned data from all of them, created data frames, wrote data to a csv file, and generated tables using knitr. I utilized many features of the tidyverse, including filtering and creating new variables in a data frame, created different types of plots, such as bar graphs, line graphs, and facet graphs. Given the different variations of tournaments and matches Jeopardy! has done over the years as they continue to innovate their show, that made some aspects of web scraping and cleaning very difficult, and a lot of my project effort was spent just on creating a main data source from which I could create the rest of my plots and charts from. This limited the scope of my project, as I had hoped to discuss other game aspects, such as Final Jeopardy statistics and player to player comparisons in the same game. Working at the world's largest bank during a period of unprecedented market volatility didn't help my schedule either, and my available timeframes were mostly limited to random late nights during the week and hours during the weekends that I wasn't on support, which also forced me to scale back the content of my project. Towards the last few days of my project, I encountered some weird incompatibility issues with the Latex on my local machine versus what's installed in R as part of tidytex, and an entire day was wasted reinstalling Latex. Also, as someone whose R experience is limited to undergrad class experience only, this project helped me get more comfortable with the software and RStudio, as up until this class I only ever used the Console, which is more difficult to use as the scope of a problem gets larger and larger. Overall, I learned a lot from this class, and this project. Because this is data I am interested in, I do plan on continuing to practice what I learned on this data, and eventually get to topics I didn't get to discuss. 
